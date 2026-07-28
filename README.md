@@ -1,2 +1,1 @@
-# Card-Vault
-Tracks sports card prices on eBay's last sold items, allows you to utilize these prices to calculate your return on investment on your own cards.
+Designed and built a portfolio tracker for sports card investing — logs purchase price vs. current market value, links directly to eBay's sold listings for real pricing data, and calculates ROI per card and across the full collection.
