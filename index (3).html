@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Vault — Sports Card Portfolio Tracker</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap');
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #0B0E14;
+  color: #E7ECF5;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  padding: 40px 16px;
+}
+.cv-root { max-width: 720px; margin: 0 auto; }
+.cv-ticker { font-family: 'Oswald', sans-serif; letter-spacing: 0.02em; }
+.cv-mono { font-family: 'Roboto Mono', monospace; }
+.cv-card {
+  aspect-ratio: 5 / 7;
+  border-radius: 14px;
+  padding: 2px;
+  background: linear-gradient(160deg, #6C8FFF, #2A2F3D 30%, #2A2F3D 70%, #FF6EC7);
+  transition: transform 0.2s ease, background-position 0.4s ease;
+  background-size: 200% 200%;
+  cursor: pointer;
+}
+.cv-card:hover { transform: translateY(-4px); background-position: 100% 100%; }
+.cv-card-inner {
+  background: #12151D;
+  border-radius: 12px;
+  height: 100%;
+  width: 100%;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.cv-btn {
+  background: transparent;
+  border: 0.5px solid rgba(231,236,245,0.3);
+  color: #E7ECF5;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.cv-btn:hover { background: rgba(231,236,245,0.08); }
+.cv-input {
+  background: #171B24;
+  border: 0.5px solid rgba(231,236,245,0.25);
+  color: #E7ECF5;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  width: 100%;
+}
+</style>
+</head>
+<body>
+
+<div class="cv-root">
+  <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:20px; flex-wrap:wrap; gap:8px;">
+    <div class="cv-ticker" style="font-size:26px; font-weight:600;">Card Vault</div>
+    <div id="cv-status" style="font-size:12px; color:#7C8797;">Loading...</div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:24px;">
+    <div style="background:#12151D; border-radius:10px; padding:14px 16px;">
+      <div style="font-size:11px; color:#7C8797; margin-bottom:4px;">Invested</div>
+      <div class="cv-mono" id="cv-total-paid" style="font-size:20px; font-weight:500;">$0</div>
+    </div>
+    <div style="background:#12151D; border-radius:10px; padding:14px 16px;">
+      <div style="font-size:11px; color:#7C8797; margin-bottom:4px;">Current value</div>
+      <div class="cv-mono" id="cv-total-value" style="font-size:20px; font-weight:500;">$0</div>
+    </div>
+    <div style="background:#12151D; border-radius:10px; padding:14px 16px;">
+      <div style="font-size:11px; color:#7C8797; margin-bottom:4px;">Overall ROI</div>
+      <div class="cv-mono" id="cv-total-roi" style="font-size:20px; font-weight:500;">0%</div>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+    <button class="cv-btn" id="cv-add-btn"><i class="ti ti-plus" aria-hidden="true" style="vertical-align:-2px; margin-right:4px;"></i>Add card</button>
+    <button class="cv-btn" id="cv-reset-btn"><i class="ti ti-refresh" aria-hidden="true" style="vertical-align:-2px; margin-right:4px;"></i>Reset all data</button>
+  </div>
+
+  <div id="cv-form" style="display:none; background:#12151D; border-radius:12px; padding:16px; margin-bottom:20px;">
+    <div style="display:grid; grid-template-columns:1fr; gap:10px; max-width:360px;">
+      <input class="cv-input" id="cv-name" placeholder="Card name, e.g. 2020 Prizm Ja Morant RC #248" />
+      <input class="cv-input" id="cv-image" placeholder="Image URL (optional, paste from eBay listing)" />
+      <a href="#" id="cv-image-search-link" target="_blank" rel="noopener" style="font-size:12px; color:#8FA8FF; text-decoration:none; display:flex; align-items:center; gap:4px;">
+        <i class="ti ti-photo" aria-hidden="true" style="font-size:14px;"></i>Find card image on eBay
+      </a>
+      <input class="cv-input" id="cv-paid" placeholder="Purchase price ($)" type="number" step="0.01" />
+
+      <div style="border-top: 1px solid rgba(231,236,245,0.15); padding-top:10px; margin-top:2px;">
+        <div style="font-size:12px; color:#8FA8FF; margin-bottom:6px; display:flex; align-items:center; gap:4px;">
+          <i class="ti ti-calculator" aria-hidden="true" style="font-size:14px;"></i>Estimate value from last 5 sold comps
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:8px;">
+          <input class="cv-input" id="cv-comp-0" placeholder="$1" type="number" step="0.01" style="padding:6px 6px; font-size:12px;">
+          <input class="cv-input" id="cv-comp-1" placeholder="$2" type="number" step="0.01" style="padding:6px 6px; font-size:12px;">
+          <input class="cv-input" id="cv-comp-2" placeholder="$3" type="number" step="0.01" style="padding:6px 6px; font-size:12px;">
+          <input class="cv-input" id="cv-comp-3" placeholder="$4" type="number" step="0.01" style="padding:6px 6px; font-size:12px;">
+          <input class="cv-input" id="cv-comp-4" placeholder="$5" type="number" step="0.01" style="padding:6px 6px; font-size:12px;">
+        </div>
+        <button class="cv-btn" id="cv-avg-btn" type="button" style="font-size:12px; padding:6px 10px;">Average comps into current value</button>
+      </div>
+
+      <input class="cv-input" id="cv-value" placeholder="Current market value ($)" type="number" step="0.01" />
+      <a href="#" id="cv-ebay-link" target="_blank" rel="noopener" style="font-size:12px; color:#8FA8FF; text-decoration:none; display:flex; align-items:center; gap:4px;">
+        <i class="ti ti-external-link" aria-hidden="true" style="font-size:14px;"></i>Check sold prices on eBay
+      </a>
+      <div style="display:flex; gap:8px;">
+        <button class="cv-btn" id="cv-save-btn">Save card</button>
+        <button class="cv-btn" id="cv-cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#12151D; border-radius:12px; padding:16px; margin-bottom:20px;">
+    <div style="font-size:12px; color:#8FA8FF; margin-bottom:8px; display:flex; align-items:center; gap:4px;">
+      <i class="ti ti-gavel" aria-hidden="true" style="font-size:14px;"></i>Find auctions
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input class="cv-input" id="cv-deal-search" placeholder="Card name to shop for" style="flex:1; min-width:160px;" />
+      <button class="cv-btn" id="cv-deal-btn" type="button">Search live auctions</button>
+    </div>
+  </div>
+
+  <div id="cv-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:14px;"></div>
+  <div id="cv-empty" style="display:none; text-align:center; padding:40px 0; color:#7C8797; font-size:14px;">
+    No cards yet. Add your first card to start tracking your portfolio.
+  </div>
+</div>
+
+<script>
+(function() {
+  var STORAGE_KEY = 'card_vault_portfolio';
+  var cards = [];
+  var editingId = null;
+
+  function fmtMoney(n) {
+    return '$' + Number(n).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+  }
+  function roi(card) {
+    if (!card.paid) return 0;
+    return ((card.value - card.paid) / card.paid) * 100;
+  }
+  function roiColor(r) {
+    return r >= 0 ? '#4ADE80' : '#F87171';
+  }
+
+  function loadCards() {
+    var statusEl = document.getElementById('cv-status');
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      cards = raw ? JSON.parse(raw) : [];
+      statusEl.textContent = cards.length + ' card' + (cards.length === 1 ? '' : 's') + ' tracked';
+    } catch (e) {
+      cards = [];
+      statusEl.textContent = 'New portfolio';
+    }
+    render();
+  }
+
+  function persist() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    } catch (e) {
+      document.getElementById('cv-status').textContent = 'Save failed, try again';
+    }
+  }
+
+  function render() {
+    var grid = document.getElementById('cv-grid');
+    var empty = document.getElementById('cv-empty');
+    grid.innerHTML = '';
+
+    empty.style.display = cards.length === 0 ? 'block' : 'none';
+
+    var totalPaid = 0, totalValue = 0;
+    cards.forEach(function(card) {
+      totalPaid += Number(card.paid);
+      totalValue += Number(card.value);
+
+      var r = roi(card);
+      var el = document.createElement('div');
+      el.className = 'cv-card';
+      var imageHtml = card.image
+        ? '<img src="' + escapeHtml(card.image) + '" alt="" style="width:100%; height:64px; object-fit:cover; border-radius:8px; margin-bottom:8px;" onerror="this.style.display=\'none\'">'
+        : '';
+      el.innerHTML =
+        '<div class="cv-card-inner">' +
+          '<div>' +
+            '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">' +
+              '<div style="font-size:12px; font-weight:600; line-height:1.3;">' + escapeHtml(card.name) + '</div>' +
+              '<a href="' + ebaySoldUrl(card.name) + '" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="color:#7C8797; flex-shrink:0;" aria-label="Check sold prices on eBay"><i class="ti ti-external-link" aria-hidden="true" style="font-size:14px;"></i></a>' +
+            '</div>' +
+            imageHtml +
+          '</div>' +
+          '<div>' +
+            '<div style="font-size:11px; color:#7C8797;">Paid</div>' +
+            '<div class="cv-mono" style="font-size:13px; margin-bottom:6px;">' + fmtMoney(card.paid) + '</div>' +
+            '<div style="font-size:11px; color:#7C8797;">Value</div>' +
+            '<div class="cv-mono" style="font-size:13px; margin-bottom:6px;">' + fmtMoney(card.value) + '</div>' +
+            '<div class="cv-mono" style="font-size:13px; font-weight:600; color:' + roiColor(r) + ';">' + (r >= 0 ? '+' : '') + r.toFixed(1) + '%</div>' +
+          '</div>' +
+        '</div>';
+      el.addEventListener('click', function() { openEdit(card); });
+      grid.appendChild(el);
+    });
+
+    document.getElementById('cv-total-paid').textContent = fmtMoney(totalPaid);
+    document.getElementById('cv-total-value').textContent = fmtMoney(totalValue);
+    var overallRoi = totalPaid ? ((totalValue - totalPaid) / totalPaid) * 100 : 0;
+    var roiEl = document.getElementById('cv-total-roi');
+    roiEl.textContent = (overallRoi >= 0 ? '+' : '') + overallRoi.toFixed(1) + '%';
+    roiEl.style.color = roiColor(overallRoi);
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function ebaySoldUrl(query) {
+    return 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query) + '&LH_Sold=1&LH_Complete=1';
+  }
+
+  function ebayImageSearchUrl(query) {
+    return 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query) + '&_dmpt=&LH_ItemCondition=&_sacat=0';
+  }
+
+  function ebayAuctionUrl(query) {
+    return 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query) + '&LH_Auction=1&_sop=1';
+  }
+
+  function updateEbayLink() {
+    var name = document.getElementById('cv-name').value.trim();
+    var link = document.getElementById('cv-ebay-link');
+    link.href = name ? ebaySoldUrl(name) : '#';
+    var imgLink = document.getElementById('cv-image-search-link');
+    imgLink.href = name ? ebayImageSearchUrl(name) : '#';
+  }
+
+  function searchDeal() {
+    var query = document.getElementById('cv-deal-search').value.trim();
+    if (!query) {
+      document.getElementById('cv-status').textContent = 'Enter a card name to search';
+      return;
+    }
+    window.open(ebayAuctionUrl(query), '_blank', 'noopener');
+  }
+
+  function averageComps() {
+    var vals = [];
+    for (var i = 0; i < 5; i++) {
+      var raw = document.getElementById('cv-comp-' + i).value;
+      if (raw !== '') {
+        var n = parseFloat(raw);
+        if (!isNaN(n)) vals.push(n);
+      }
+    }
+    if (vals.length === 0) {
+      document.getElementById('cv-status').textContent = 'Enter at least one comp price';
+      return;
+    }
+    var avg = vals.reduce(function(a, b) { return a + b; }, 0) / vals.length;
+    document.getElementById('cv-value').value = avg.toFixed(2);
+    document.getElementById('cv-status').textContent = 'Averaged ' + vals.length + ' comp' + (vals.length === 1 ? '' : 's');
+  }
+
+  function openAdd() {
+    editingId = null;
+    document.getElementById('cv-name').value = '';
+    document.getElementById('cv-image').value = '';
+    document.getElementById('cv-paid').value = '';
+    document.getElementById('cv-value').value = '';
+    for (var i = 0; i < 5; i++) document.getElementById('cv-comp-' + i).value = '';
+    document.getElementById('cv-save-btn').textContent = 'Save card';
+    document.getElementById('cv-form').style.display = 'block';
+    updateEbayLink();
+  }
+
+  function openEdit(card) {
+    editingId = card.id;
+    document.getElementById('cv-name').value = card.name;
+    document.getElementById('cv-image').value = card.image || '';
+    document.getElementById('cv-paid').value = card.paid;
+    document.getElementById('cv-value').value = card.value;
+    for (var i = 0; i < 5; i++) document.getElementById('cv-comp-' + i).value = '';
+    document.getElementById('cv-save-btn').textContent = 'Update card';
+    document.getElementById('cv-form').style.display = 'block';
+    updateEbayLink();
+  }
+
+  function saveCard() {
+    var name = document.getElementById('cv-name').value.trim();
+    var image = document.getElementById('cv-image').value.trim();
+    var paid = parseFloat(document.getElementById('cv-paid').value);
+    var value = parseFloat(document.getElementById('cv-value').value);
+
+    if (!name || isNaN(paid) || isNaN(value)) {
+      document.getElementById('cv-status').textContent = 'Fill in all fields';
+      return;
+    }
+
+    if (editingId) {
+      var existing = cards.find(function(c) { return c.id === editingId; });
+      existing.name = name;
+      existing.image = image;
+      existing.paid = paid;
+      existing.value = value;
+    } else {
+      cards.push({ id: Date.now().toString(), name: name, image: image, paid: paid, value: value });
+    }
+
+    persist();
+    document.getElementById('cv-form').style.display = 'none';
+    render();
+    document.getElementById('cv-status').textContent = cards.length + ' card' + (cards.length === 1 ? '' : 's') + ' tracked';
+  }
+
+  function resetAll() {
+    if (!confirm('Delete all cards? This cannot be undone.')) return;
+    cards = [];
+    persist();
+    render();
+    document.getElementById('cv-status').textContent = 'Portfolio reset';
+  }
+
+  document.getElementById('cv-name').addEventListener('input', updateEbayLink);
+  document.getElementById('cv-avg-btn').addEventListener('click', averageComps);
+  document.getElementById('cv-deal-btn').addEventListener('click', searchDeal);
+  document.getElementById('cv-add-btn').addEventListener('click', openAdd);
+  document.getElementById('cv-cancel-btn').addEventListener('click', function() {
+    document.getElementById('cv-form').style.display = 'none';
+  });
+  document.getElementById('cv-save-btn').addEventListener('click', saveCard);
+  document.getElementById('cv-reset-btn').addEventListener('click', resetAll);
+
+  loadCards();
+})();
+</script>
+</body>
+</html>
